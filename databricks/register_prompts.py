@@ -13,7 +13,7 @@ from dotenv import load_dotenv
     under the specified schema. The prompt will be registered with a commit message and tags for better organization."""
     
 
-load_dotenv(dotenv_path=".env.local")
+load_dotenv(dotenv_path=".env.databricks")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(

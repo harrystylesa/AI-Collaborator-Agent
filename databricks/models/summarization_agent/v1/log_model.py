@@ -75,7 +75,7 @@ class OpenAIWrapper(mlflow.pyfunc.PythonModel):
 
 
 if __name__ == "__main__":
-    load_dotenv(dotenv_path=".env.local")
+    load_dotenv(dotenv_path=".env.model")
     
     # --- define input example as a DataFrame ---
     input_example_df = pd.DataFrame({"content": ["This is a sample text to summarize.", "see what happens when breaking it into multiple lines."]})
