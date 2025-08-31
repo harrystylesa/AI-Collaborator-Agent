@@ -10,35 +10,22 @@ from mlflow.models.signature import infer_signature
 
 class OpenAIWrapper(mlflow.pyfunc.PythonModel):
     def load_context(self, context):
-        # Load a specific version using URI syntax
-        uc_schema = context.model_config["uc_schema"]
-        prompt_name = context.model_config["prompt_name"]
-        prompt_version = context.model_config["prompt_version"]
-        num_sentences = context.model_config.get("num_sentences", 20)
-
-        if not isinstance(num_sentences, int) or num_sentences <= 0:
-            raise ValueError("Number of sentences must be a positive integer.")
-
-        self.num_sentences = num_sentences
-        self.prompt = mlflow.genai.load_prompt(
-            name_or_uri=f"prompts:/{uc_schema}.{prompt_name}/{prompt_version}"
-        )
-
+        promptfile = context.artifacts.get("prompt")
+        prompt = ""
+        with open(promptfile, 'r', 1) as reader:
+            prompt += reader.readline()
+            
+        # print(f'loaded prompt: {prompt}')        
+        self.prompt = prompt
+        
     def format_inputs(self, model_input):
         content = '\n'.join(list(model_input["content"]))
-        print(f"Content to summarize: {content}")
-        # insert some code that formats your inputs
-        # print(type(model_input))
-        # model_input = model_input.to_dict()
-        # content = model_input.get("content", "")
+        # print(f"Content to summarize: {content}")
         if not content:
             raise ValueError("Content must be provided for summarization.")
 
-        self.formatted_prompt = self.prompt.format(
-            content=content, num_sentences=self.num_sentences
-        )
-        print(f"Formatted prompt: {self.formatted_prompt}")
-        return self.formatted_prompt
+        # print(f"input content: {content}")
+        return content
 
     def format_outputs(self, outputs):
         if isinstance(outputs, list):
@@ -61,7 +48,7 @@ class OpenAIWrapper(mlflow.pyfunc.PythonModel):
             input=[
                 {
                     "role": "system",
-                    "content": "You are a helpful assistant.",
+                    "content": self.prompt,
                 },
                 {
                     "role": "user",
@@ -69,7 +56,7 @@ class OpenAIWrapper(mlflow.pyfunc.PythonModel):
                 },
             ],
         )
-        print(response.output_text)
+        # print(response.output_text)
         # print(type(response.output_text))
         return self.format_outputs(response.output_text)
 
@@ -86,17 +73,14 @@ if __name__ == "__main__":
     signature = infer_signature(input_example_df, mock_output)
 
     mlflow.pyfunc.log_model(
-        name="v1_prompt_model",
+        name="summary_prompt_model",
+        artifacts={"prompt": "databricks/models/summarization_agent/v2_prompts.txt"},
         python_model=OpenAIWrapper(),
         input_example=input_example_df,
-        registered_model_name="workspace.summarization_agent.v1_prompt_model",
+        registered_model_name="workspace.summarization_agent.summary_prompt_model",
         model_config={
             "openai_model": "gpt-4o-mini",
-            "openai_key_env": os.environ["OPENAI_API_KEY"],
-            "uc_schema": "workspace.summarization_agent",
-            "prompt_name": "summarization_prompt",
-            "prompt_version": "1",
-            "num_sentences": 20,
+            "openai_key_env": os.environ["OPENAI_API_KEY"]
         },
         signature=signature,
     )

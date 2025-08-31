@@ -1,10 +1,32 @@
 import datetime
 import hashlib
+from clerk_backend_api import AuthenticateRequestOptions, Clerk, authenticate_request
 from databricks import sql
+import httpx
+import openai
 import requests
 import json
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 import os
+
+
+def get_current_user_id(request: Request):
+    with Clerk(bearer_auth=os.getenv("CLERK_SECRET_KEY")) as clerk:
+        state = clerk.authenticate_request(
+            request,
+            AuthenticateRequestOptions(
+                authorized_parties=[os.getenv("FRONTEND_ORIGIN")],
+                # 👇 Accept the audience you set in the template:
+                audience=["convex"],
+            ),
+        )
+
+    if not state.is_signed_in:
+        # state.reason explains why (expired, invalid signature, wrong aud, etc.)
+        raise HTTPException(status_code=401, detail=str(state.reason))
+
+    # The verified JWT payload is here:
+    return state.payload.get("sub")
 
 
 def get_ab_test_group(user_id: str) -> str:
@@ -31,14 +53,72 @@ def get_ab_test_group(user_id: str) -> str:
     return hash_as_int % 2
 
 
+def load_prompt(prompt_file):
+    prompt = ""
+    with open(prompt_file, "r", 1) as reader:
+        prompt += reader.readline()
+
+    return prompt
+
+
+def direct_summary(input_content, user_id):
+    exp_params = json.load(open("experiment.config.json"))
+    prompt1_file = exp_params["exp_direct_summarization"]["prompt1"]
+    prompt2_file = exp_params["exp_direct_summarization"]["prompt2"]
+
+    if not prompt1_file or not prompt2_file:
+        raise HTTPException(
+            status_code=500, detail="prompt file not found in experiment.config.json"
+        )
+
+    prompt1 = load_prompt(prompt1_file)
+    prompt2 = load_prompt(prompt2_file)
+
+    model_name = exp_params["exp_direct_summarization"]["model_name"]
+    if not model_name:
+        raise HTTPException(
+            status_code=500, detail="model_name not found in experiment.config.json"
+        )
+
+    assigned_group = get_ab_test_group(user_id)
+    if assigned_group == 0:
+        prompt = prompt1
+    else:
+        prompt = prompt2
+
+    # Create an OpenAI client connected to OpenAI SDKs
+    client = openai.OpenAI()
+    from openai import OpenAI
+
+    client = OpenAI()
+
+    # print(f"prompt:{prompt}")
+    # Format with variables
+    response = client.responses.create(
+        model=model_name,  # This example uses a Databricks hosted LLM - you can replace this with any AI Gateway or Model Serving endpoint. If you provide your own OpenAI credentials, replace with a valid OpenAI model e.g., gpt-4o, etc.
+        input=[
+            {
+                "role": "system",
+                "content": prompt,
+            },
+            {
+                "role": "user",
+                "content": input_content,
+            },
+        ],
+    )
+    # print(f"output:{response.output_text}")
+    return response.output_text
+
+
 def score_model(dataset, user_id, client_request_id):
-    exp_params = json.load(open(".experiment.config.json"))
+    exp_params = json.load(open("experiment.config.json"))
     endpoint1_url = exp_params["exp_summarization"]["endpoint1"]
     endpoint2_url = exp_params["exp_summarization"]["endpoint2"]
 
     if not endpoint1_url or not endpoint2_url:
         raise HTTPException(
-            status_code=500, detail="Endpoint URL not found in .experiment.config.json"
+            status_code=500, detail="Endpoint URL not found in experiment.config.json"
         )
 
     assigned_group = get_ab_test_group(user_id)
@@ -64,6 +144,7 @@ def score_model(dataset, user_id, client_request_id):
         )
 
     response = requests.request(method="POST", headers=headers, url=url, data=data_json)
+    # print(f"Response : {response}")
     if not response or response.status_code != 200:
         raise HTTPException(status_code=response.status_code, detail=response.text)
 
@@ -80,7 +161,7 @@ def score_model(dataset, user_id, client_request_id):
     return text
 
 
-def submit_feedback(feedback: dict):
+def submit_feedback(feedback: dict, user_id: str):
     """Submits user feedback to a Databricks SQL Warehouse."""
     try:
         with sql.connect(
@@ -89,25 +170,24 @@ def submit_feedback(feedback: dict):
             access_token=os.getenv("DATABRICKS_TOKEN"),
         ) as connection:
             with connection.cursor() as cursor:
-                print("Successfully connected to Databricks SQL Warehouse.")
+                # print("Successfully connected to Databricks SQL Warehouse.")
                 cursor.execute(
-                    """INSERT INTO workspace.summarization_agent.summarization_agent_feedback
+                    """INSERT INTO workspace.summarization_agent.feedback
             (client_request_id, user_id, feedback_rate, feedback_text, feedback_timestamp)
             VALUES (?, ?, ?, ?, ?)""",
                     (
                         feedback["client_request_id"],
-                        feedback["user_id"],
+                        user_id,
                         feedback["rate"],
                         feedback["comment"],
                         datetime.datetime.utcnow(),
                     ),
                 )
 
-                print(f"Insert info succeeded.")
+                # print(f"Insert info succeeded.")
     except Exception as e:
         print(f"Error connecting to Databricks SQL Warehouse: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-    
 
 
 if __name__ == "__main__":

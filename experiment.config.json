@@ -1,0 +1,11 @@
+{
+    "exp_summarization": {
+        "endpoint1": "https://dbc-c2e6864a-4e14.cloud.databricks.com/serving-endpoints/summary_prompt_model_v1/invocations",
+        "endpoint2": "https://dbc-c2e6864a-4e14.cloud.databricks.com/serving-endpoints/summary_prompt_model_v2/invocations"
+    },
+      "exp_direct_summarization": {
+        "prompt1": "./databricks/models/summarization_agent/v1_prompts.txt",
+        "prompt2": "./databricks/models/summarization_agent/v2_prompts.txt",
+        "model_name": "gpt-4o-mini"
+    }
+}

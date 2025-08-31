@@ -1,5 +1,0 @@
-FastAPI
-uvicorn
-pydantic
-sqlalchemy
-databases
