@@ -48,6 +48,7 @@ jobs:
         DATABRICKS_HOST: ${{secrets.DATABRICKS_HOST}}
         CLERK_SECRET_KEY: ${{secrets.CLERK_SECRET_KEY}}
         FRONTEND_ORIGIN: ${{secrets.FRONTEND_ORIGIN}}
+        FRONTEND_ORIGIN_DEV: ${{secrets.FRONTEND_ORIGIN_DEV}}
         OPENAI_API_KEY: ${{secrets.OPENAI_API_KEY}}
 
       run: |
@@ -57,6 +58,7 @@ jobs:
           --from-literal=DATABRICKS_HOST="${DATABRICKS_HOST}" \
           --from-literal=CLERK_SECRET_KEY="${CLERK_SECRET_KEY}" \
           --from-literal=FRONTEND_ORIGIN="${FRONTEND_ORIGIN}" \
+          --from-literal=FRONTEND_ORIGIN_DEV="${FRONTEND_ORIGIN_DEV}" \
           --from-literal=OPENAI_API_KEY="${OPENAI_API_KEY}" \
           --dry-run=client -o yaml | kubectl apply -f -
           

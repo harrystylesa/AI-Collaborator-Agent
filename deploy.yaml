@@ -43,6 +43,11 @@ spec:
             secretKeyRef:
               name: my-app-secrets
               key: FRONTEND_ORIGIN
+        - name: FRONTEND_ORIGIN_DEV
+          valueFrom:
+            secretKeyRef:
+              name: my-app-secrets
+              key: FRONTEND_ORIGIN_DEV
         - name: OPENAI_API_KEY
           valueFrom:
             secretKeyRef:
