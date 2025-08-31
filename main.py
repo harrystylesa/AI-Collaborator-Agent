@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 
 # Check if the .env.local file exists
-if os.path.exists('.env.fastapi'):
+if os.path.exists(".env.fastapi"):
     load_dotenv(dotenv_path=".env.fastapi")
 
 
@@ -37,7 +37,11 @@ app = FastAPI()
 # This is the crucial part that handles the OPTIONS request
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Replace with your Next.js frontend URL
+    allow_origins=[
+        "http://localhost:3000",
+        os.getenv("FRONTEND_ORIGIN"),
+        os.getenv("FRONTEND_ORIGIN_DEV"),
+    ],  # Replace with your Next.js frontend URL
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -82,7 +86,6 @@ async def root(summary: Summary, user_id: str = Depends(get_current_user_id)):
     if not summary.content:
         raise HTTPException(status_code=400, detail="missing content")
 
-
     contents = summary.content.split("\n")
     df = pd.DataFrame({"content": contents})
     # print(user_id)
@@ -107,7 +110,6 @@ async def root(summary: Summary, user_id: str = Depends(get_current_user_id)):
         raise HTTPException(status_code=400, detail="missing client_request_id")
     if not summary.content:
         raise HTTPException(status_code=400, detail="missing content")
-
 
     content = summary.content.strip()
 
