@@ -3,10 +3,12 @@ import pandas as pd
 from dotenv import load_dotenv
 from pydantic import BaseModel
 from tools import direct_summary, score_model, submit_feedback, get_current_user_id
-# from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 import os
 
-load_dotenv(dotenv_path=".env.fastapi")
+# Check if the .env.local file exists
+if os.path.exists('.env.fastapi'):
+    load_dotenv(dotenv_path=".env.fastapi")
 
 
 class Summary(BaseModel):
@@ -33,13 +35,13 @@ class feedbackResponse(BaseModel):
 app = FastAPI()
 
 # This is the crucial part that handles the OPTIONS request
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=["http://localhost:3000"],  # Replace with your Next.js frontend URL
-#     allow_credentials=True,
-#     allow_methods=["*"],
-#     allow_headers=["*"],
-# )
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Replace with your Next.js frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/")
@@ -118,4 +120,4 @@ async def root(summary: Summary, user_id: str = Depends(get_current_user_id)):
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="localhost", port=8000, log_level=0)
+    uvicorn.run(app, host="0.0.0.0", port=80, log_level=0)

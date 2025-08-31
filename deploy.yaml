@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-collaborator-agent-gke-deploy
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ai-collaborator-pod
+  template:
+    metadata:
+      labels:
+        app: ai-collaborator-pod
+    spec:
+      containers:
+      - name: ai-collaborator-container
+        image: gcr.io/PROJECT_ID/IMAGE:TAG
+        ports:
+        - containerPort: 80
+      env:
+      - name: DATABRICKS_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: my-app-secrets
+            key: DATABRICKS_TOKEN
+      - name: DATABRICKS_WAREHOUSE_HTTP_PATH
+        valueFrom:
+          secretKeyRef:
+            name: my-app-secrets
+            key: DATABRICKS_WAREHOUSE_HTTP_PATH
+      - name: DATABRICKS_HOST
+        valueFrom:
+          secretKeyRef:
+            name: my-app-secrets
+            key: DATABRICKS_HOST
+      - name: CLERK_SECRET_KEY
+        valueFrom:
+          secretKeyRef:
+            name: my-app-secrets
+            key: CLERK_SECRET_KEY
+      - name: FRONTEND_ORIGIN
+        valueFrom:
+          secretKeyRef:
+            name: my-app-secrets
+            key: FRONTEND_ORIGIN
+      - name: OPENAI_API_KEY
+        valueFrom:
+          secretKeyRef:
+            name: my-app-secrets
+            key: OPENAI_API_KEY
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mylb
+spec:
+  type: LoadBalancer
+  selector:
+    app: ai-collaborator-pod
+  ports:
+  - port: 80 # Service IP Port
+    targetPort: 80 # Container Port

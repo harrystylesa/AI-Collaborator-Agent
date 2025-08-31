@@ -165,7 +165,7 @@ def submit_feedback(feedback: dict, user_id: str):
     try:
         with sql.connect(
             server_hostname=os.getenv("DATABRICKS_HOST"),
-            http_path=os.getenv("DATABRICKS_WARHOUSE_HTTP_PATH"),
+            http_path=os.getenv("DATABRICKS_WAREHOUSE_HTTP_PATH"),
             access_token=os.getenv("DATABRICKS_TOKEN"),
         ) as connection:
             with connection.cursor() as cursor:
