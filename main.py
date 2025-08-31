@@ -1,10 +1,9 @@
 from fastapi import FastAPI, HTTPException, Depends
-from clerk_backend_api import Clerk
 import pandas as pd
 from dotenv import load_dotenv
 from pydantic import BaseModel
 from tools import direct_summary, score_model, submit_feedback, get_current_user_id
-from fastapi.middleware.cors import CORSMiddleware
+# from fastapi.middleware.cors import CORSMiddleware
 import os
 
 load_dotenv(dotenv_path=".env.fastapi")

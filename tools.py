@@ -1,8 +1,7 @@
 import datetime
 import hashlib
-from clerk_backend_api import AuthenticateRequestOptions, Clerk, authenticate_request
+from clerk_backend_api import AuthenticateRequestOptions, Clerk
 from databricks import sql
-import httpx
 import openai
 import requests
 import json
