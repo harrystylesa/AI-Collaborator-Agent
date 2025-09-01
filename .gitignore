@@ -1,8 +1,9 @@
 .venv
 .log_model.py
-test_databricks.py
+.test_databricks.py
 __pycache__
 mlruns
 .env*
 .requirements*
 .test.py
+.register_prompts.py
