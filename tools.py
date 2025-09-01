@@ -14,7 +14,7 @@ def get_current_user_id(request: Request):
         state = clerk.authenticate_request(
             request,
             AuthenticateRequestOptions(
-                authorized_parties=[os.getenv("FRONTEND_ORIGIN"), os.geteng("FRONTEND_ORIGIN_DEV"), 'http://localhost:3000'],
+                authorized_parties=[os.getenv("FRONTEND_ORIGIN"), os.getenv("FRONTEND_ORIGIN_DEV"), 'http://localhost:3000'],
                 # 👇 Accept the audience you set in the template:
                 audience=["convex"],
             ),
