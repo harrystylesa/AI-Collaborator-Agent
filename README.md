@@ -1,6 +1,6 @@
 # AI-Collaborator Backend
 
-A Python-based backend developed with **FastAPI** that serves as an API gateway for the [Google Docs Clone project](https://github.com/harrystylesa/google_docs_clone). This service orchestrates AI-driven summarization, model management, and real-time performance monitoring.
+A Python-based backend developed with **FastAPI** that serves as an API gateway for the [Google Docs Clone project](https://github.com/harrystylesa/google_docs_clone). This service orchestrates AI-driven summarization, model management, and real-time performance monitoring. 
 
 🔗 Live Demo: [google-docs-clone-link](https://google-docs-clone-kappa-lovat.vercel.app) 
 
